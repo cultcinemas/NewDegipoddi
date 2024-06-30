@@ -40,6 +40,7 @@ try:
 except ValueError:
     raise Exception("Your Admins list does not contain valid integers.")
 
+# Auto-delete messages
 AUTO_DELETE_MESSAGE_1 = '#PAID_PROMOTION 👇✅\n\nHello Friend Take VIP MEMBERSHIP & ENJOY DIRECT VIDEOS NO LINKS & NO ADS CHECK DEMO NOW.\n\nhttps://t.me/+4ZslCNZmfvs4MWNl'
 AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️\n\nThis Files/Videos will be deleted in 10 mins (Due to report issues).\n\nPlease forward these files/videos to your Saved Messages or any other chat and start downloading them there.'
 
