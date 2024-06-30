@@ -45,7 +45,8 @@ try:
 except ValueError:
         raise Exception("Your Admins list does not contain valid integers.")
 
-AUTO_DELETE_MESSAGE = '#PAID_PROMOTION 👇✅
+AUTO_DELETE_MESSAGE = '#PAID_PROMOTION 👇✅ 
+
 Hello Friend Take VIP MEMBERSHIP & ENJOY DIRECT VIDEOS NO LINKS & NO ADS CHECK DEMO NOW 
 https://t.me/+4ZslCNZmfvs4MWNl
 
