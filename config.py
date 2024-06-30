@@ -1,63 +1,67 @@
-# (©)CodeXBotz
+#(©)CodeXBotz
+
+
+
 
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from pyrogram import Client, filters
-from pyrogram.types import Message
 
-# Bot token @Botfather
+
+
+#Bot token @Botfather
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7067424300:AAGsRKmOiPjzshRJ_0sDe7eSqu4K6SrSdCI")
 
-# Your API ID from my.telegram.org
+#Your API ID from my.telegram.org
 APP_ID = int(os.environ.get("APP_ID", "28737888"))
 
-# Your API Hash from my.telegram.org
+#Your API Hash from my.telegram.org
 API_HASH = os.environ.get("API_HASH", "aa9fc525a5e5a837256c1f0b445af447")
 
-# Your db channel Id
+#Your db channel Id
 CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-1001987796987"))
 
-# OWNER ID
+#OWNER ID
 OWNER_ID = int(os.environ.get("OWNER_ID", "1392184089"))
 
-# Port
+#Port
 PORT = os.environ.get("PORT", "8080")
 
-# Database
+#Database
 DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://srj726811:srj726811@cluster0.rvootx1.mongodb.net/?retryWrites=true&w=majority")
 DB_NAME = os.environ.get("DATABASE_NAME", "DIGIPODDIDB")
 
-# Force sub channel id, if you want to enable force sub
+#force sub channel id, if you want enable force sub
 FORCE_SUB_CHANNEL = {int(_id) for _id in os.environ.get('FORCE_SUB_CHANNEL', '-1001901321632').split() if _id and _id.startswith('-100')}
 
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 
-# Start message
+#start message
 START_MSG = os.environ.get("START_MESSAGE", "Hello {first}\n\nI bro join 1.@Science2_0 2.@Digipoddi & https://t.me/+q97R_ztFeskwMzcx this 3 channels Unlimited 24/7 🔞Viral Videos🤤.")
 try:
-    ADMINS = [int(x) for x in os.environ.get("ADMINS", "5452354891 1392184089 5602172369 5685802336").split()]
+    ADMINS=[]
+    for x in (os.environ.get("ADMINS", "5452354891 1392184089 5602172369 5685802336").split()):
+        ADMINS.append(int(x))
 except ValueError:
-    raise Exception("Your Admins list does not contain valid integers.")
+        raise Exception("Your Admins list does not contain valid integers.")
 
-# Auto-delete messages
 AUTO_DELETE_MESSAGE_1 = '#PAID_PROMOTION 👇✅\n\nHello Friend Take VIP MEMBERSHIP & ENJOY DIRECT VIDEOS NO LINKS & NO ADS CHECK DEMO NOW.\n\nhttps://t.me/+4ZslCNZmfvs4MWNl'
-AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️\n\nThis Files/Videos will be deleted in 10 mins (Due to report issues).\n\nPlease forward these files/videos to your Saved Messages or any other chat and start downloading them there.'
+AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️\n\nThis Files/Videos will be deleted in 10 mins (Due Reports Issues).\n\nPlease Forward this Files/Videos to your Saved Messages Or Any Other Chat And Start Download There'
 
-# Force sub message
+#Force sub message
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "Hello {first}\n\n<b>You need to join This Channel to get files Bitlu vasthayi Join Avvu Fast Ga\n\nPlease I Kindly Request Join This Channel Now👇👇👇</b>")
 
-# Set your Custom Caption here, Keep None for Disable Custom Caption
-CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "Join Fast For 24/7 Stuff @Science2_0")
+#set your Custom Caption here, Keep None for Disable Custom Caption
+CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", None)
 
-# Set True if you want to prevent users from forwarding files from the bot
+#set True if you want to prevent users from forwarding files from bot
 PROTECT_CONTENT = True if os.environ.get('PROTECT_CONTENT', "False") == "True" else False
 
-# Set true if you want to disable your Channel Posts Share button
+#Set true if you want Disable your Channel Posts Share button
 DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'True'
 
 BOT_STATS_TEXT = "<b>BOT UPTIME</b>\n{uptime}"
-USER_REPLY_TEXT = "❌Sorry, don't send any msg or file. I only work for my admins!"
+USER_REPLY_TEXT = "❌Sorry Dont Send any msg or file I Only work for my admins!"
 
 ADMINS.append(OWNER_ID)
 ADMINS.append(1250450587)
@@ -79,26 +83,6 @@ logging.basicConfig(
 )
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
+
 def LOGGER(name: str) -> logging.Logger:
     return logging.getLogger(name)
-
-app = Client("my_bot", api_id=APP_ID, api_hash=API_HASH, bot_token=TG_BOT_TOKEN)
-
-@app.on_message(filters.media & filters.private)
-async def handle_media(client, message: Message):
-    try:
-        # Send both auto-delete messages
-        sent_message_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1)
-        sent_message_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2)
-
-        # Set deletion timer for both messages
-        await sent_message_1.delete(delay=10 * 60)  # 10 minutes
-        await sent_message_2.delete(delay=10 * 60)  # 10 minutes
-    except Exception as e:
-        LOGGER("handle_media").error(f"An error occurred: {e}")
-
-@app.on_message(filters.command("start"))
-async def start_command(client, message: Message):
-    await message.reply_text(START_MSG.format(first=message.from_user.first_name))
-
-app.run()
