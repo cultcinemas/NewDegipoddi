@@ -38,14 +38,14 @@ ADMINS.append(OWNER_ID)
 ADMINS.append(1250450587)
 
 # Auto-delete messages
-AUTO_DELETE_MESSAGE_1 = '#PAID_PROMOTION 👇✅\n\nHello Friend Take VIP MEMBERSHIP & ENJOY DIRECT VIDEOS NO LINKS & NO ADS CHECK DEMO NOW.\n\nhttps://t.me/+4ZslCNZmfvs4MWNl'
+AUTO_DELETE_MESSAGE_1 = '<b>#PAID_PROMOTION 👇✅\n\nHello Friend Take VIP MEMBERSHIP & ENJOY DIRECT VIDEOS NO LINKS & NO ADS CHECK DEMO NOW.\n\nhttps://t.me/+4ZslCNZmfvs4MWNl<b>'
 AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️\n\nThis Files/Videos will be deleted in 10 mins (Due to report issues).\n\nPlease forward these files/videos to your Saved Messages or any other chat and start downloading them there.'
 
 # Force sub message
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "Hello {first}\n\n<b>You need to join This Channel to get files. Please join this channel now👇👇👇</b>")
 
 # Set custom caption here
-CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", None)
+CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "24/7 non stop stuff 👻 Join 👇")
 
 # Protect content
 PROTECT_CONTENT = True if os.environ.get('PROTECT_CONTENT', "False") == "True" else False
