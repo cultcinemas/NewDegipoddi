@@ -1,20 +1,24 @@
-from pyrogram import Client, filters
+import asyncio
+from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
-from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, AUTO_DELETE_MESSAGE_1, AUTO_DELETE_MESSAGE_2
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from bot import Bot
+from config import (
+    ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, 
+    DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, 
+    AUTO_DELETE_MESSAGE_1, AUTO_DELETE_MESSAGE_2
+)
 from database.database import add_user, del_user, full_userbase, present_user
 from helper_func import is_notsubscribed, decode, get_messages, auto_delete_message
-import re
-import asyncio
 
 loop = asyncio.get_event_loop()
 
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
-    id = message.from_user.id
+    user_id = message.from_user.id
 
-    if fsub_ids := await is_notsubscribed(client, id):
+    if fsub_ids := await is_notsubscribed(client, user_id):
         btn = []
         for fid in fsub_ids:
             try:
@@ -35,7 +39,7 @@ async def start_command(client: Client, message: Message):
                 last=message.from_user.last_name,
                 username=None if not message.from_user.username else '@' + message.from_user.username,
                 mention=message.from_user.mention,
-                id=id
+                id=user_id
             )
             await message.reply_text(
                 text=text,
@@ -47,19 +51,22 @@ async def start_command(client: Client, message: Message):
             )
             return
 
-    if not await present_user(id):
+    if not await present_user(user_id):
         try:
-            await add_user(id)
+            await add_user(user_id)
         except:
             pass
+
     text = message.text
     if len(text) > 7:
         try:
             base64_string = text.split(" ", 1)[1]
         except:
             return
+        
         string = await decode(base64_string)
         argument = string.split("-")
+        
         if len(argument) == 3:
             try:
                 start = int(int(argument[1]) / abs(client.db_channel.id))
@@ -81,44 +88,60 @@ async def start_command(client: Client, message: Message):
                 ids = [int(int(argument[1]) / abs(client.db_channel.id))]
             except:
                 return
+
         temp_msg = await message.reply("Please wait. 5 min Bitlu Videos On The Way")
+
         try:
             messages = await get_messages(client, ids)
         except:
             await message.reply_text("Something went wrong..!")
             return
+
         await temp_msg.delete()
 
         msgs = []
         for msg in messages:
-            # Remove URLs from caption
-            if bool(CUSTOM_CAPTION) & bool(msg.document):
+            if CUSTOM_CAPTION and msg.document:
                 caption = CUSTOM_CAPTION.format(
-                    previouscaption="" if not msg.caption else re.sub(r'http\S+', '', msg.caption.html),
+                    previouscaption="" if not msg.caption else msg.caption.html,
                     filename=msg.document.file_name
                 )
             else:
-                caption = "" if not msg.caption else re.sub(r'http\S+', '', msg.caption.html)
+                caption = "" if not msg.caption else msg.caption.html
 
-            if DISABLE_CHANNEL_BUTTON:
-                reply_markup = msg.reply_markup
-            else:
-                reply_markup = None
+            reply_markup = msg.reply_markup if not DISABLE_CHANNEL_BUTTON else None
 
             try:
-                cmsg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                cmsg = await msg.copy(
+                    chat_id=message.from_user.id,
+                    caption=caption,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                    protect_content=PROTECT_CONTENT
+                )
                 msgs.append(cmsg)
                 await asyncio.sleep(0.5)
             except FloodWait as e:
                 await asyncio.sleep(e.x)
-                cmsg = await msg.copy(chat_id=message.from_user.id, caption=caption, parse_mode=ParseMode.HTML, reply_markup=reply_markup, protect_content=PROTECT_CONTENT)
+                cmsg = await msg.copy(
+                    chat_id=message.from_user.id,
+                    caption=caption,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup,
+                    protect_content=PROTECT_CONTENT
+                )
                 msgs.append(cmsg)
             except:
                 pass
-        del_msg = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
-        msgs.append(del_msg)
+
+        # Send auto-delete messages
+        del_msg_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
+        del_msg_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2, quote=True)
+        msgs.extend([del_msg_1, del_msg_2])
+
         loop.create_task(auto_delete_message(msgs))
         return
+
     else:
         reply_markup = InlineKeyboardMarkup(
             [
@@ -134,7 +157,7 @@ async def start_command(client: Client, message: Message):
                 last=message.from_user.last_name,
                 username=None if not message.from_user.username else '@' + message.from_user.username,
                 mention=message.from_user.mention,
-                id=message.from_user.id
+                id=user_id
             ),
             reply_markup=reply_markup,
             disable_web_page_preview=True,
@@ -144,7 +167,7 @@ async def start_command(client: Client, message: Message):
 
 #=====================================================================================##
 
-WAIT_MSG = """"<b>Processing ...</b>"""
+WAIT_MSG = """<b>Processing ...</b>"""
 
 REPLY_ERROR = """<code>Use this command as a reply to any telegram message without any spaces.</code>"""
 
@@ -167,7 +190,7 @@ async def send_text(client: Bot, message: Message):
         deleted = 0
         unsuccessful = 0
 
-        pls_wait = await message.reply("<i>Broadcasting Message.. This will Take Some Time</i>")
+        pls_wait = await message.reply("<i>Broadcasting Message.. This will take some time</i>")
         for chat_id in query:
             try:
                 await broadcast_msg.copy(chat_id)
