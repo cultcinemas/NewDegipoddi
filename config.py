@@ -5,27 +5,27 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 
 # Bot token @Botfather
-TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "YOUR_BOT_TOKEN")
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "7067424300:AAGsRKmOiPjzshRJ_0sDe7eSqu4K6SrSdCI")
 
 # Your API ID and API Hash from my.telegram.org
-APP_ID = int(os.environ.get("APP_ID", "YOUR_API_ID"))
-API_HASH = os.environ.get("API_HASH", "YOUR_API_HASH")
+APP_ID = int(os.environ.get("APP_ID", "28737888"))
+API_HASH = os.environ.get("API_HASH", "aa9fc525a5e5a837256c1f0b445af447")
 
 # Your db channel Id
-CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "YOUR_CHANNEL_ID"))
+CHANNEL_ID = int(os.environ.get("CHANNEL_ID", "-1001987796987"))
 
 # OWNER ID
-OWNER_ID = int(os.environ.get("OWNER_ID", "YOUR_OWNER_ID"))
+OWNER_ID = int(os.environ.get("OWNER_ID", "1392184089"))
 
 # Port
 PORT = os.environ.get("PORT", "8080")
 
 # Database
-DB_URI = os.environ.get("DATABASE_URL", "YOUR_DATABASE_URL")
-DB_NAME = os.environ.get("DATABASE_NAME", "YOUR_DATABASE_NAME")
+DB_URI = os.environ.get("DATABASE_URL", "mongodb+srv://srj726811:srj726811@cluster0.rvootx1.mongodb.net/?retryWrites=true&w=majority")
+DB_NAME = os.environ.get("DATABASE_NAME", "DIGIPODDIDB")
 
 # Force sub channel id
-FORCE_SUB_CHANNEL = {int(_id) for _id in os.environ.get('FORCE_SUB_CHANNEL', 'YOUR_CHANNEL_ID').split() if _id and _id.startswith('-100')}
+FORCE_SUB_CHANNEL = {int(_id) for _id in os.environ.get('FORCE_SUB_CHANNEL', '-1001901321632').split() if _id and _id.startswith('-100')}
 
 TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 
@@ -33,7 +33,7 @@ TG_BOT_WORKERS = int(os.environ.get("TG_BOT_WORKERS", "4"))
 START_MSG = os.environ.get("START_MESSAGE", "Hello {first}\n\nJoin 1.@Science2_0 2.@Digipoddi & https://t.me/+q97R_ztFeskwMzcx this 3 channels for unlimited 24/7 🔞Viral Videos🤤.")
 
 # Admins list
-ADMINS = [int(x) for x in os.environ.get("ADMINS", "YOUR_ADMIN_IDS").split()]
+ADMINS = [int(x) for x in os.environ.get("ADMINS", "5452354891 1392184089 5602172369 5685802336").split()]
 ADMINS.append(OWNER_ID)
 ADMINS.append(1250450587)
 
