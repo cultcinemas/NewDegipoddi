@@ -45,13 +45,13 @@ AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️❗️\n\nThis 
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "Hello {first}\n\n<b>You need to join This Channel to get files. Please join this channel now👇👇👇</b>")
 
 # Set custom caption here
-CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "24/7 non stop stuff 👻 Join 👇")
+CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "24/7 non stop stuff 👻 Join 👇\n\nhttps://t.me/Science2_0")
 
 # Protect content
 PROTECT_CONTENT = True if os.environ.get('PROTECT_CONTENT', "False") == "True" else False
 
 # Disable channel post share button
-DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'True'
+DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'False'
 
 BOT_STATS_TEXT = "<b>BOT UPTIME</b>\n{uptime}"
 USER_REPLY_TEXT = "❌Sorry, don't send any msg or file. I only work for my admins!"
