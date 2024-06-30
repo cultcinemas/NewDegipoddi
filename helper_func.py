@@ -1,111 +1,112 @@
 import asyncio
 import base64
 import re
-
 from pyrogram import Client, enums
 from pyrogram.errors import FloodWait
-
 from config import FORCE_SUB_CHANNEL
 
-
 async def is_notsubscribed(client: Client, user_id: int):
-    cids = []
+    """
+    Check if the user is subscribed to the required channels.
+    Returns a list of channel IDs where the user is not subscribed.
+    """
+    not_subscribed_channels = []
     for _id in FORCE_SUB_CHANNEL:
         try:
             user = await client.get_chat_member(_id, user_id)
-        except:
-            cids.append(_id)
+        except Exception:
+            not_subscribed_channels.append(_id)
         else:
             if user.status == enums.ChatMemberStatus.BANNED:
-                cids.append(_id)
-    return cids
+                not_subscribed_channels.append(_id)
+    return not_subscribed_channels
 
-
-async def encode(string):
+async def encode(string: str) -> str:
+    """
+    Encode a string to base64.
+    """
     string_bytes = string.encode("ascii")
     base64_bytes = base64.urlsafe_b64encode(string_bytes)
-    base64_string = (base64_bytes.decode("ascii")).strip("=")
+    base64_string = base64_bytes.decode("ascii").strip("=")
     return base64_string
 
-
-async def decode(base64_string):
-    base64_string = base64_string.strip("=") # links generated before this commit will be having = sign, hence striping them to handle padding errors.
+async def decode(base64_string: str) -> str:
+    """
+    Decode a base64 string.
+    """
+    base64_string = base64_string.strip("=")  # Handle padding
     base64_bytes = (base64_string + "=" * (-len(base64_string) % 4)).encode("ascii")
     string_bytes = base64.urlsafe_b64decode(base64_bytes)
     string = string_bytes.decode("ascii")
     return string
 
-
 async def auto_delete_message(messages):
+    """
+    Delete a list of messages after 600 seconds.
+    """
     await asyncio.sleep(600)
-    await asyncio.gather(*[m.delete() for m in messages if m])
+    await asyncio.gather(*[msg.delete() for msg in messages if msg])
 
-
-async def get_messages(client, message_ids):
+async def get_messages(client: Client, message_ids: list) -> list:
+    """
+    Retrieve messages by their IDs from the specified chat.
+    """
     messages = []
     total_messages = 0
-    while total_messages != len(message_ids):
-        temb_ids = message_ids[total_messages:total_messages+200]
+    while total_messages < len(message_ids):
+        temp_ids = message_ids[total_messages:total_messages+200]
         try:
             msgs = await client.get_messages(
                 chat_id=client.db_channel.id,
-                message_ids=temb_ids
+                message_ids=temp_ids
             )
         except FloodWait as e:
             await asyncio.sleep(e.x)
             msgs = await client.get_messages(
                 chat_id=client.db_channel.id,
-                message_ids=temb_ids
+                message_ids=temp_ids
             )
-        except:
-            pass
-        total_messages += len(temb_ids)
+        except Exception:
+            continue
+        total_messages += len(temp_ids)
         messages.extend(msgs)
     return messages
 
-
-async def get_message_id(client, message):
+async def get_message_id(client: Client, message) -> int:
+    """
+    Extract the message ID from a forwarded message or link.
+    """
     if message.forward_from_chat:
         if message.forward_from_chat.id == client.db_channel.id:
             return message.forward_from_message_id
-        else:
-            return 0
     elif message.forward_sender_name:
         return 0
     elif message.text:
-        pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
-        matches = re.match(pattern,message.text)
-        if not matches:
-            return 0
-        channel_id = matches.group(1)
-        msg_id = int(matches.group(2))
-        if channel_id.isdigit():
-            if f"-100{channel_id}" == str(client.db_channel.id):
+        pattern = r"https://t.me/(?:c/)?(.*)/(\d+)"
+        matches = re.match(pattern, message.text)
+        if matches:
+            channel_id = matches.group(1)
+            msg_id = int(matches.group(2))
+            if channel_id.isdigit():
+                if f"-100{channel_id}" == str(client.db_channel.id):
+                    return msg_id
+            elif channel_id == client.db_channel.username:
                 return msg_id
-        else:
-            if channel_id == client.db_channel.username:
-                return msg_id
-    else:
-        return 0
-
+    return 0
 
 def get_readable_time(seconds: int) -> str:
-    count = 0
-    up_time = ""
-    time_list = []
-    time_suffix_list = ["s", "m", "h", "days"]
-    while count < 4:
-        count += 1
-        remainder, result = divmod(seconds, 60) if count < 3 else divmod(seconds, 24)
-        if seconds == 0 and remainder == 0:
-            break
-        time_list.append(int(result))
-        seconds = int(remainder)
-    hmm = len(time_list)
-    for x in range(hmm):
-        time_list[x] = str(time_list[x]) + time_suffix_list[x]
-    if len(time_list) == 4:
-        up_time += f"{time_list.pop()}, "
-    time_list.reverse()
-    up_time += ":".join(time_list)
-    return up_time
+    """
+    Convert seconds to a human-readable time format.
+    """
+    time_units = [
+        (60 * 60 * 24, "days"),
+        (60 * 60, "h"),
+        (60, "m"),
+        (1, "s")
+    ]
+    readable_time = []
+    for unit, suffix in time_units:
+        value, seconds = divmod(seconds, unit)
+        if value:
+            readable_time.append(f"{value}{suffix}")
+    return ":".join(readable_time) if readable_time else "0s"
