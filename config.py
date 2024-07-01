@@ -51,7 +51,7 @@ CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "24/7 non stop stuff 👻 Join
 PROTECT_CONTENT = True if os.environ.get('PROTECT_CONTENT', "False") == "True" else False
 
 # Disable channel post share button
-DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'False'
+DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'True'
 
 BOT_STATS_TEXT = "<b>BOT UPTIME</b>\n{uptime}"
 USER_REPLY_TEXT = "❌Sorry, don't send any msg or file. I only work for my admins!"
