@@ -45,7 +45,8 @@ AUTO_DELETE_MESSAGE_2 = '❗️❗️❗️IMPORTANT ❗️❗️❗️\n\nThis 
 FORCE_MSG = os.environ.get("FORCE_SUB_MESSAGE", "Hello {first}\n\n<b>You need to join This Channel to get files. Please join this channel now👇👇👇</b>")
 
 # Set custom caption here
-CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "24/7 non stop stuff 👻 Join 👇\n\nhttps://t.me/Science2_0")
+CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "<b>BACKUP CHANNEL :- @Digipoddi 👍\n\n 
+Village Outdoor Bitlu 👍\n\nhttps://t.me/+fK0ViWsuPZ4yNjMx\n\n Free Videos 💥 @Digipoddi_Videos</b>")
 
 # Protect content
 PROTECT_CONTENT = True if os.environ.get('PROTECT_CONTENT', "False") == "True" else False
