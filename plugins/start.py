@@ -1,43 +1,44 @@
 import asyncio
+
 from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+
 from bot import Bot
-from config import (
-    ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, 
-    DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, 
-    AUTO_DELETE_MESSAGE_1, AUTO_DELETE_MESSAGE_2
-)
+from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, AUTO_DELETE_MESSAGE_1,AUTO_DELETE_MESSAGE_2
 from database.database import add_user, del_user, full_userbase, present_user
 from helper_func import is_notsubscribed, decode, get_messages, auto_delete_message
 
 loop = asyncio.get_event_loop()
 
+
 @Bot.on_message(filters.command('start') & filters.private)
 async def start_command(client: Client, message: Message):
-    user_id = message.from_user.id
+    id = message.from_user.id
 
-    if fsub_ids := await is_notsubscribed(client, user_id):
+    if fsub_ids := await is_notsubscribed(client, id):
         btn = []
         for fid in fsub_ids:
             try:
                 invite_link = await client.create_chat_invite_link(fid)
                 chat_info = await client.get_chat(fid)
-            except Exception as e:
-                logging.error(f"Failed to get invite link for chat {fid}: {e}")
+            except:
                 continue
             else:
                 btn.append([InlineKeyboardButton(chat_info.title, url=invite_link.invite_link)])
 
         if btn:
-            btn.append([InlineKeyboardButton('Try Again', url=f"https://t.me/{client.username}?start={message.command[1]}")])
+            try:
+                btn.append([InlineKeyboardButton('Try Again', url=f"https://t.me/{client.username}?start={message.command[1]}")])
+            except IndexError:
+                pass
             text = FORCE_MSG.format(
                 first=message.from_user.first_name,
                 last=message.from_user.last_name,
-                username=('@' + message.from_user.username) if message.from_user.username else None,
+                username=None if not message.from_user.username else '@' + message.from_user.username,
                 mention=message.from_user.mention,
-                id=user_id
+                id=id
             )
             await message.reply_text(
                 text=text,
@@ -49,91 +50,110 @@ async def start_command(client: Client, message: Message):
             )
             return
 
-    if not await present_user(user_id):
+    if not await present_user(id):
         try:
-            await add_user(user_id)
-        except Exception as e:
-            logging.error(f"Failed to add user {user_id}: {e}")
-
+            await add_user(id)
+        except:
+            pass
     text = message.text
-    if len(text) > 7:
+    if len(text)>7:
         try:
             base64_string = text.split(" ", 1)[1]
-            string = await decode(base64_string)
-            argument = string.split("-")
-
-            if len(argument) == 3:
-                start = int(argument[1]) // abs(client.db_channel.id)
-                end = int(argument[2]) // abs(client.db_channel.id)
-                ids = range(start, end + 1) if start <= end else range(start, end - 1, -1)
-            elif len(argument) == 2:
-                ids = [int(argument[1]) // abs(client.db_channel.id)]
-            else:
-                return
-
-            temp_msg = await message.reply("Please wait. 5 min Bitlu Videos On The Way")
-            messages = await get_messages(client, ids)
-            await temp_msg.delete()
-
-            msgs = []
-            for msg in messages:
-                caption = CUSTOM_CAPTION.format(
-                    previouscaption="" if not msg.caption else msg.caption.html,
-                    filename=msg.document.file_name if msg.document else ""
-                ) if CUSTOM_CAPTION and msg.document else "" if not msg.caption else msg.caption.html
-
-                reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
-                try:
-                    cmsg = await msg.copy(
-                        chat_id=message.from_user.id,
-                        caption=caption,
-                        parse_mode=ParseMode.HTML,
-                        reply_markup=reply_markup,
-                        protect_content=PROTECT_CONTENT
-                    )
-                    msgs.append(cmsg)
-                    await asyncio.sleep(0.5)
-                except FloodWait as e:
-                    await asyncio.sleep(e.x)
-                    cmsg = await msg.copy(
-                        chat_id=message.from_user.id,
-                        caption=caption,
-                        parse_mode=ParseMode.HTML,
-                        reply_markup=reply_markup,
-                        protect_content=PROTECT_CONTENT
-                    )
-                    msgs.append(cmsg)
-                except Exception as e:
-                    logging.error(f"Failed to copy message: {e}")
-
-            # Send auto-delete messages
-            del_msg_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
-            del_msg_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2, quote=True)
-            msgs.extend([del_msg_1, del_msg_2])
-
-            loop.create_task(auto_delete_message(msgs))
+        except:
             return
+        string = await decode(base64_string)
+        argument = string.split("-")
+        if len(argument) == 3:
+            try:
+                start = int(int(argument[1]) / abs(client.db_channel.id))
+                end = int(int(argument[2]) / abs(client.db_channel.id))
+            except:
+                return
+            if start <= end:
+                ids = range(start,end+1)
+            else:
+                ids = []
+                i = start
+                while True:
+                    ids.append(i)
+                    i -= 1
+                    if i < end:
+                        break
+        elif len(argument) == 2:
+            try:
+                ids = [int(int(argument[1]) / abs(client.db_channel.id))]
+            except:
+                return
+        temp_msg = await message.reply("Please wait. 5 min Bitlu Videos On The Way")
+        try:
+            messages = await get_messages(client, ids)
+        except:
+            await message.reply_text("Something went wrong..!")
+            return
+        await temp_msg.delete()
 
-    reply_markup = InlineKeyboardMarkup(
-        [
+        msgs = []
+        for msg in messages:
+
+            if bool(CUSTOM_CAPTION) & bool(msg.document):
+                caption = CUSTOM_CAPTION.format(previouscaption = "" if not msg.caption else msg.caption.html, filename = msg.document.file_name)
+            else:
+                caption = "" if not msg.caption else msg.caption.html
+
+            if DISABLE_CHANNEL_BUTTON:
+                reply_markup = msg.reply_markup
+            else:
+                reply_markup = None
+
+            try:
+                cmsg = await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                msgs.append(cmsg)
+                await asyncio.sleep(0.5)
+            except FloodWait as e:
+                await asyncio.sleep(e.x)
+                cmsg = await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                msgs.append(cmsg)
+            except:
+                pass
+        # Send auto-delete messages
+        del_msg_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
+        del_msg_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2, quote=True)
+        msgs.extend([del_msg_1, del_msg_2])
+
+        loop.create_task(auto_delete_message(msgs))
+        return
+        
+    else:
+        reply_markup = InlineKeyboardMarkup(
             [
-                InlineKeyboardButton("😊 About Me", callback_data="about"),
-                InlineKeyboardButton("🔒 Close", callback_data="close")
+                [
+                    InlineKeyboardButton("😊 About Me", callback_data = "about"),
+                    InlineKeyboardButton("🔒 Close", callback_data = "close")
+                ]
             ]
-        ]
-    )
-    await message.reply_text(
-        text=START_MSG.format(
-            first=message.from_user.first_name,
-            last=message.from_user.last_name,
-            username=('@' + message.from_user.username) if message.from_user.username else None,
-            mention=message.from_user.mention,
-            id=user_id
-        ),
-        reply_markup=reply_markup,
-        disable_web_page_preview=True,
-        quote=True
-    )
+        )
+        await message.reply_text(
+            text = START_MSG.format(
+                first = message.from_user.first_name,
+                last = message.from_user.last_name,
+                username = None if not message.from_user.username else '@' + message.from_user.username,
+                mention = message.from_user.mention,
+                id = message.from_user.id
+            ),
+            reply_markup = reply_markup,
+            disable_web_page_preview = True,
+            quote = True
+        )
+        return
+
+
+#=====================================================================================##
+
+WAIT_MSG = """"<b>Processing ...</b>"""
+
+REPLY_ERROR = """<code>Use this command as a replay to any telegram message with out any spaces.</code>"""
+
+#=====================================================================================##
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
@@ -152,7 +172,7 @@ async def send_text(client: Bot, message: Message):
         deleted = 0
         unsuccessful = 0
 
-        pls_wait = await message.reply("<i>Broadcasting Message.. This will take some time</i>")
+        pls_wait = await message.reply("<i>Broadcasting Message.. This will Take Some Time</i>")
         for chat_id in query:
             try:
                 await broadcast_msg.copy(chat_id)
@@ -167,9 +187,9 @@ async def send_text(client: Bot, message: Message):
             except InputUserDeactivated:
                 await del_user(chat_id)
                 deleted += 1
-            except Exception as e:
+            except:
                 unsuccessful += 1
-                logging.error(f"Failed to broadcast message to {chat_id}: {e}")
+                pass
             total += 1
 
         status = f"""<b><u>Broadcast Completed</u>
@@ -180,7 +200,7 @@ Blocked Users: <code>{blocked}</code>
 Deleted Accounts: <code>{deleted}</code>
 Unsuccessful: <code>{unsuccessful}</code></b>"""
 
-        await pls_wait.edit(status)
+        return await pls_wait.edit(status)
 
     else:
         msg = await message.reply(REPLY_ERROR)
