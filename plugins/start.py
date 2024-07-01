@@ -100,23 +100,19 @@ async def start_command(client: Client, message: Message):
         await temp_msg.delete()
 
         msgs = []
-        for msg in messages:
-            
-            if bool(CUSTOM_CAPTION) & bool(msg.document):
-                caption = CUSTOM_CAPTION.format(previouscaption = "" if not msg.caption else msg.caption.html, filename = msg.document.file_name)
-            else:
-                caption = "" if not msg.caption else msg.caption.html
+            for msg in messages:
+                caption = CUSTOM_CAPTION.format(
+                    previouscaption="" if not msg.caption else msg.caption.html,
+                    filename=msg.document.file_name if msg.document else ""
+                ) if CUSTOM_CAPTION and msg.document else "" if not msg.caption else msg.caption.html
 
-            if DISABLE_CHANNEL_BUTTON:
-                reply_markup = msg.reply_markup
-            else:
-                reply_markup = None
-            try:
-                cmsg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
+                reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
+                try:
+                    cmsg = await msg.copy(
+                        chat_id=message.from_user.id,
+                        caption=caption,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
                     protect_content=PROTECT_CONTENT
                 )
                 msgs.append(cmsg)
