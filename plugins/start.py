@@ -101,16 +101,16 @@ async def start_command(client: Client, message: Message):
 
         msgs = []
         for msg in messages:
-            if CUSTOM_CAPTION and msg.document:
-                caption = CUSTOM_CAPTION.format(
-                    previouscaption="" if not msg.caption else msg.caption.html,
-                    filename=msg.document.file_name
-                )
+            
+            if bool(CUSTOM_CAPTION) & bool(msg.document):
+                caption = CUSTOM_CAPTION.format(previouscaption = "" if not msg.caption else msg.caption.html, filename = msg.document.file_name)
             else:
                 caption = "" if not msg.caption else msg.caption.html
 
-            reply_markup = msg.reply_markup if not DISABLE_CHANNEL_BUTTON else None
-
+            if DISABLE_CHANNEL_BUTTON:
+                reply_markup = msg.reply_markup
+            else:
+                reply_markup = None
             try:
                 cmsg = await msg.copy(
                     chat_id=message.from_user.id,
