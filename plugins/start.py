@@ -24,20 +24,18 @@ async def start_command(client: Client, message: Message):
             try:
                 invite_link = await client.create_chat_invite_link(fid)
                 chat_info = await client.get_chat(fid)
-            except:
+            except Exception as e:
+                logging.error(f"Failed to get invite link for chat {fid}: {e}")
                 continue
             else:
                 btn.append([InlineKeyboardButton(chat_info.title, url=invite_link.invite_link)])
 
         if btn:
-            try:
-                btn.append([InlineKeyboardButton('Try Again', url=f"https://t.me/{client.username}?start={message.command[1]}")])
-            except IndexError:
-                pass
+            btn.append([InlineKeyboardButton('Try Again', url=f"https://t.me/{client.username}?start={message.command[1]}")])
             text = FORCE_MSG.format(
                 first=message.from_user.first_name,
                 last=message.from_user.last_name,
-                username=None if not message.from_user.username else '@' + message.from_user.username,
+                username=('@' + message.from_user.username) if message.from_user.username else None,
                 mention=message.from_user.mention,
                 id=user_id
             )
@@ -54,140 +52,88 @@ async def start_command(client: Client, message: Message):
     if not await present_user(user_id):
         try:
             await add_user(user_id)
-        except:
-            pass
+        except Exception as e:
+            logging.error(f"Failed to add user {user_id}: {e}")
 
     text = message.text
     if len(text) > 7:
         try:
             base64_string = text.split(" ", 1)[1]
-        except:
-            return
-        
-        string = await decode(base64_string)
-        argument = string.split("-")
-        
-        if len(argument) == 3:
-            try:
-                start = int(int(argument[1]) / abs(client.db_channel.id))
-                end = int(int(argument[2]) / abs(client.db_channel.id))
-            except:
-                return
-            if start <= end:
-                ids = range(start, end + 1)
+            string = await decode(base64_string)
+            argument = string.split("-")
+
+            if len(argument) == 3:
+                start = int(argument[1]) // abs(client.db_channel.id)
+                end = int(argument[2]) // abs(client.db_channel.id)
+                ids = range(start, end + 1) if start <= end else range(start, end - 1, -1)
+            elif len(argument) == 2:
+                ids = [int(argument[1]) // abs(client.db_channel.id)]
             else:
-                ids = []
-                i = start
-                while True:
-                    ids.append(i)
-                    i -= 1
-                    if i < end:
-                        break
-        elif len(argument) == 2:
-            try:
-                ids = [int(int(argument[1]) / abs(client.db_channel.id))]
-            except:
                 return
 
-        temp_msg = await message.reply("Please wait. 5 min Bitlu Videos On The Way")
-
-        try:
+            temp_msg = await message.reply("Please wait. 5 min Bitlu Videos On The Way")
             messages = await get_messages(client, ids)
-        except:
-            await message.reply_text("Something went wrong..!")
-            return
+            await temp_msg.delete()
 
-        await temp_msg.delete()
-
-        msgs = []
-        for msg in messages:
-            
-            if bool(CUSTOM_CAPTION) & bool(msg.document):
-                caption = CUSTOM_CAPTION.format(previouscaption = "" if not msg.caption else msg.caption.html, filename = msg.document.file_name)
-            else:
-                caption = "" if not msg.caption else msg.caption.html
-
-            if DISABLE_CHANNEL_BUTTON:
-                reply_markup = msg.reply_markup
-            else:
-                reply_markup = None
-            try:
-                cmsg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
-                    protect_content=PROTECT_CONTENT
-                )
-                msgs.append(cmsg)
-                await asyncio.sleep(0.5)
-            except FloodWait as e:
-                await asyncio.sleep(e.x)
-                cmsg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,
-                    protect_content=PROTECT_CONTENT
-                )
-                msgs.append(cmsg)
-            except:
-                pass
-
-        # Senfor msg in messages:
-            if CUSTOM_CAPTION and msg.document:
+            msgs = []
+            for msg in messages:
                 caption = CUSTOM_CAPTION.format(
                     previouscaption="" if not msg.caption else msg.caption.html,
-                    filename=msg.document.file_name
-                )
-            else:
-                caption = "" if not msg.caption else msg.caption.html
+                    filename=msg.document.file_name if msg.document else ""
+                ) if CUSTOM_CAPTION and msg.document else "" if not msg.caption else msg.caption.html
 
-            reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
+                reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
+                try:
+                    cmsg = await msg.copy(
+                        chat_id=message.from_user.id,
+                        caption=caption,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                        protect_content=PROTECT_CONTENT
+                    )
+                    msgs.append(cmsg)
+                    await asyncio.sleep(0.5)
+                except FloodWait as e:
+                    await asyncio.sleep(e.x)
+                    cmsg = await msg.copy(
+                        chat_id=message.from_user.id,
+                        caption=caption,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup,
+                        protect_content=PROTECT_CONTENT
+                    )
+                    msgs.append(cmsg)
+                except Exception as e:
+                    logging.error(f"Failed to copy message: {e}")
 
-            try:
-                cmsg = await msg.copy(
-                    chat_id=message.from_user.id,
-                    caption=caption,
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup,d auto-delete messages
-        del_msg_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
-        del_msg_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2, quote=True)
-        msgs.extend([del_msg_1, del_msg_2])
+            # Send auto-delete messages
+            del_msg_1 = await message.reply_text(AUTO_DELETE_MESSAGE_1, quote=True)
+            del_msg_2 = await message.reply_text(AUTO_DELETE_MESSAGE_2, quote=True)
+            msgs.extend([del_msg_1, del_msg_2])
 
-        loop.create_task(auto_delete_message(msgs))
-        return
+            loop.create_task(auto_delete_message(msgs))
+            return
 
-    else:
-        reply_markup = InlineKeyboardMarkup(
+    reply_markup = InlineKeyboardMarkup(
+        [
             [
-                [
-                    InlineKeyboardButton("😊 About Me", callback_data="about"),
-                    InlineKeyboardButton("🔒 Close", callback_data="close")
-                ]
+                InlineKeyboardButton("😊 About Me", callback_data="about"),
+                InlineKeyboardButton("🔒 Close", callback_data="close")
             ]
-        )
-        await message.reply_text(
-            text=START_MSG.format(
-                first=message.from_user.first_name,
-                last=message.from_user.last_name,
-                username=None if not message.from_user.username else '@' + message.from_user.username,
-                mention=message.from_user.mention,
-                id=user_id
-            ),
-            reply_markup=reply_markup,
-            disable_web_page_preview=True,
-            quote=True
-        )
-        return
-
-#=====================================================================================##
-
-WAIT_MSG = """<b>Processing ...</b>"""
-
-REPLY_ERROR = """<code>Use this command as a reply to any telegram message without any spaces.</code>"""
-
-#=====================================================================================##
+        ]
+    )
+    await message.reply_text(
+        text=START_MSG.format(
+            first=message.from_user.first_name,
+            last=message.from_user.last_name,
+            username=('@' + message.from_user.username) if message.from_user.username else None,
+            mention=message.from_user.mention,
+            id=user_id
+        ),
+        reply_markup=reply_markup,
+        disable_web_page_preview=True,
+        quote=True
+    )
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
 async def get_users(client: Bot, message: Message):
@@ -221,9 +167,9 @@ async def send_text(client: Bot, message: Message):
             except InputUserDeactivated:
                 await del_user(chat_id)
                 deleted += 1
-            except:
+            except Exception as e:
                 unsuccessful += 1
-                pass
+                logging.error(f"Failed to broadcast message to {chat_id}: {e}")
             total += 1
 
         status = f"""<b><u>Broadcast Completed</u>
@@ -234,7 +180,7 @@ Blocked Users: <code>{blocked}</code>
 Deleted Accounts: <code>{deleted}</code>
 Unsuccessful: <code>{unsuccessful}</code></b>"""
 
-        return await pls_wait.edit(status)
+        await pls_wait.edit(status)
 
     else:
         msg = await message.reply(REPLY_ERROR)
